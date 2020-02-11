@@ -1,97 +1,108 @@
+# package Moods {
+# 	use Moose;
+# 	use Method::Signatures;
+#     use enum qw|
+# 		IMPERATIVE
+# 		INTERROGATIVE
+# 		INDICATIVE
+# 	|;
+# 
+# 	method test ( $s ) {
+# 		return INTERROGATIVE if $s->pop_token( '?' );
+# 		return 0;
+# 	}
+# }
+
+package Sentence v2.0.0;
+
+use Moose;
 use Method::Signatures;
 
-package Moods {
-    use enum qw|
-        IMPERATIVE
-        INTERROGATIVE
-        INDICATIVE
-    |;
 
-    method test ( $s ) {
-        return INTERROGATIVE if $s->pop_token( '?' );
-        return 0;
-    }
+# Raw line from user input
+has 'raw' =>      ( isa => 'Str',           is => 'rw', required => 1 );
+has 'stripped' => ( isa => 'Str',           is => 'rw', required => 0 );
+has 'tokens' =>   ( isa => 'ArrayRef[Str]', is => 'rw', required => 0 );
+has 'mood' =>     ( isa => 'Str',           is => 'rw', required => 0 );
+has 'strip_words' => ( isa => 'ArrayRef[Str]', is => 'rw', required => 0 );
+
+method BUILD ( $args ) {
+	unless ( defined ( $args->{strip_words} ) ) {
+		my $ref = [ 'the', ];
+		$self->strip_words( $ref );
+	}
+	$self->_process();
 }
 
-package Sentence v2.0.0 {
-    my $raw;        # Line as returned from the user input
-    my $stripped;   # Chomp, remove articles, etc
-    my $tokens;     # Arrayref of words and symbols
-    my $mood;       # Not necessarily grammar moods
+method _process () {
+	$self->_strip_words();
+	$self->_tokenize();
+}
 
-    my @strip_words = ( 'the' );
+method _strip_words () {
+	return unless $self->strip_words;
+	my $stripped = $self->raw;
+	$stripped =~ s/$_// foreach @{$self->strip_words};
+	$self->stripped( $stripped );
+}
 
-    method _process ( $text ) {
-        $self->_strip_words();
-        $self->_tokenize();
-    }
+method _tokenize () {
+	my @tmp  = split /\s+/, $self->stripped;
+	my @fin;
 
-    method _strip_words {
-        return unless @strip_words;
-        $raw =~ s/$_// foreach @strip_words;
-    }
+	if( $self->stripped =~ /"/ ) {
+		my $in_quote = 0;
+		while( @tmp ) {
+			my $text = shift @tmp;
+			$in_quote = 1 if $text =~ /"[^"]+$/;
+			while( $in_quote ) {
+				my $t = shift @tmp;
+				$in_quote = 0 if $t =~ /"/;
+				$text .= " $t";
+			}
+			push @fin, $text;
+		}
+	}
+	else {
+		@fin = @tmp;
+	}
+	$self->tokens( \@fin );
+}
 
-    method _tokenize ( void ) {
-        my @tmp  = split /\s+/, $self->stripped;
-        my @fin;
+method remove ( @r ) {
+	foreach my $r( @r ) {
+		unless( $r =~ /\s/ ) {
+			my @toks = grep { $_ ne $r } @{$self->tokens};
+			$self->tokens( \@toks );
+		}
+		else {
+			my $i = 0;
+			while( $i < @{$self->tokens} - @r ) {
+				my $test = join ' ', @{$self->tokens}[$i..($i+@r)];
+				if( $test eq $r ) {
+					my @new = @{$self->tokens};
+					splice @new, $i, @r+1;
+					$self->tokens( \@new );
+					last;
+				}
+				$i++;
+			}
+		}
+	}
+}
 
-        if( $self->stripped =~ /"/ ) {
-            my $in_quote = 0;
-            while( @tmp ) {
-                my $text = shift @tmp;
-                $in_quote = 1 if $text =~ /"[^"]+$/;
-                while( $in_quote ) {
-                    my $t = shift @tmp;
-                    $in_quote = 0 if $t =~ /"/;
-                    $text .= " $t";
-                }
-                push @fin, $text;
-            }
-        }
-        else {
-            @fin = @tmp;
-        }
-        $self->tokens( \@fin );
-    }
+method replace ( $old, $new ) {
+	my @toks = @{$self->tokens};
+	foreach my $t ( @toks ) {
+		if( $t eq $old ) {
+			$t = $new;
+			last;
+		}
+	}
+	$self->tokens( \@toks );
+}
 
-    sub remove {
-        my( $self, @r ) = @_;
-        foreach my $r( @r ) {
-            unless( $r =~ /\s/ ) {
-                my @toks = grep { $_ ne $r } @{$self->tokens};
-                $self->tokens( \@toks );
-            }
-            else {
-                my $i = 0;
-                while( $i < @{$self->tokens} - @r ) {
-                    my $test = join ' ', @{$self->tokens}[$i..($i+@r)];
-                    if( $test eq $r ) {
-                        my @new = @{$self->tokens};
-                        splice @new, $i, @r+1;
-                        $self->tokens( \@new );
-                        last;
-                    }
-                    $i++;
-                }
-            }
-        }
-    }
+__PACKAGE__->meta->make_immutable;
 
-    sub replace {
-        my( $self, $old, $new ) = @_;
-        my @toks = @{$self->tokens};
-        foreach my $t ( @toks ) {
-            if( $t eq $old ) {
-                $t = $new;
-                last;
-            }
-        }
-        $self->tokens( \@toks );
-    }
-
-} # end package Sentence
-
-### RETURN ###
 1;
-###  TRUE  ###
 
