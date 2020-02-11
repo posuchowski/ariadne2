@@ -1,8 +1,6 @@
 # ariadne2
 
-========================================
-Ariadne2 : Interactive Fiction Framework
-========================================
+# Ariadne2 : Interactive Fiction Framework
 
 My love for the text adventure goes back to Zork. However, I would rather write
 a game than play a game. The primary goal of this project is to provide for as
@@ -17,26 +15,71 @@ that's more important than it ever being finished. :)
 Commits will generally allow running sample_game.pl, but this isn't guaranteed
 since sometimes I just like to save my work.
 
-====================
-The Parser
-====================
-
+## The Parser
+```
 Parser::Template
-	*::Parser
-	*::Template
   *::Sentence
+	*::Template
+	*::Command
+	*::Parser
+```
 
-Not a natural language parser, Parser::Template works by matching raw sentences
+Not a natural-language parser, Parser::Template works by matching raw sentences
 passed into Parser::Template::Sentence to Parser::Template::Template's, which
 allow variable saving, optional words, and a yada-yada slurp, like so:
+```
+my $T = Template->new(
+	template => 'open $Noun $Adverb:[quickly|fast|slowly|carefully]'
+);
+if (
+	$T->matches( Sentence->new( raw => 'open the box carefully' ) )
+) {
+	do_something();
+}
+```
 
-	my $T = Template->new(
-		template => 'open $Noun $Adverb:[quickly|fast|slowly|carefully]'
-	);
-	if (
-		$T->matches( Sentence->new( raw => 'open the box carefully' ) )
-	) {
-		do_something();
-	}
+### Parser::Template::Sentence
 
+Sentence conducts a pass to remove unwanted things, then tokenizes a sentence.
+```
+my $Sentence = Sentence => new(
+	raw => STRING
+	strip_words => ARRAYREF
+);
+```
+
+### Parser::Template::Template
+
+Template contains code that conducts a consumptive match of Sentence tokens against
+a string template.
+```
+my $T = Template->new(
+	template => 'open $Noun $Adverb:[quickly|fast|slowly|carefully]'
+);
+if (
+	$T->matches( Sentence->new( raw => 'open the box carefully' ) )
+) {
+	do_something();
+}
+```
+
+A template can have the following components:
+
+literals: bare words are matched 
+```
+my $T = Template->new(
+	template => 'wait'
+);
+```
+variables: variables save the word used in the position the variable appears
+```
+my $T = Template->new(
+	template => 'go $Direction'
+);
+```
+The word in the position where `$Direction` appears will be saved to the
+template's `vars` hash:
+```
+my $direction = $T->vars->{'Direction'};
+```
 
