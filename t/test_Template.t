@@ -1,9 +1,5 @@
 #!/usr/bin/env perl
 
-BEGIN {
-	push @INC, '.';
-}
-
 use strict;
 use warnings;
 use Test::More;

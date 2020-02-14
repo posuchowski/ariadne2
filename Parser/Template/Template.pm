@@ -22,16 +22,16 @@ method matches ( Sentence $sentence ) {
         my $test = shift @template;
         my $optional = 0;
         unless( $test ) {
-            $test = "";
+            $test = ""; 	# disallow undef
         }
         my $varname;
         if( $test =~ /^\$/ ) {
             ( $varname, $test ) = split ':', $test;
             $varname =~ s/^\$//;
-            unless( $test ) {
-                my $noun = shift @tokens;
-                if( defined($noun) and $noun =~ /[\w\d]/  ) {
-                    $self->vars->{$varname} = $noun;
+            unless( $test ) { 
+                my $varval = shift @tokens;
+                if( defined($varval) and $varval =~ /[\w\d]/  ) {
+                    $self->vars->{$varname} = $varval;
                     next;
                 }
                 else {

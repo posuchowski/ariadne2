@@ -1,34 +1,65 @@
+#
+# Groups a bunch of templates and knows which method to call on whatever
+# context will execute it.
+#
 package Command v2.0.0;
 
 use Moose;
 use Method::Signatures;
-use Data::Printer;
-
-extends 'Clone';
+use Game::Warning;
 
 use constant TRUE  => 1;
 use constant FALSE => 0;
 
-has 'DEBUG'     => ( isa => 'Bool',				  required => 0 );
-has 'verb' 		=> ( isa => 'Str', 				  required => 1 );
-has 'templates' => ( isa => 'ArrayRef(Template)', required => 1 );
-has 'vocab'     => ( isa => 'ArrayRef(Str)', 	  required => 1 );
-has 'context'   => ( isa => 'GameObject',         required => 0 );
-has 'method'    => ( isa => 
+has 'name' 		=> ( required => 1, isa => 'Str' );  # unambiguous command name
+has 'method'    => ( required => 1, isa => 'Str' );  # name of method to call
+has 'templates' => ( isa => 'ArrayRef[Template]', required => 1 );
 
-has 'matching_template' => ( isa => 'Template',   required => 0 );
-has 'vars'				=> ( isa => 'HashRef',	  required => 0 );
-has 'matching_nouns'    => ( isa => 'ArrayRef',   required => 0 );				
+# What object is going to receive and execute the command
+# This is assigned by the engine... unless preassigned?
+has 'context'   => ( isa => 'GameObject',         required => 0 );
+
+has 'matching_template_index' => ( isa => 'Int',   required => 0 );
 
 method BUILD() {
-	$self->vars = {};
-	$self->matching_template = undef;
+	$self->matching_template_index = -1;
 }
 
 method reset() {
-    $self->matching_template = undef;
-    $self->vars  = {};
-    $self->nouns = [];
+    $self->matching_template_index = -1;
+}
+
+method matches( Sentence $sentence ) {
+	for ( my $i=0; $i<@{$self->templates}; $i++ ) {
+		if ( $self->templates->[$i]->matches( $sentence ) ) {
+			if ( $self->matching_template_index > 0 ) {
+				Warning::warn( "In Command " . $self->name,
+					"More than one template matches";
+					"First match: ",
+					$self->templates->[ $self->matching_template_index ]->template,
+					"Also matched: ",
+					$self->templates->[ $i ]->template
+				);
+			}
+			$self->matching_template_index( $i );
+		}
+	}
+}
+
+# 
+# For example, call:
+# GameLocation->walk( { Direction => 'north' } );
+#
+method exec( $context ) {
+	no strict 'refs';
+	if ( $context->can( $self->method ) ) {
+		$context->${$self->method}(
+			$self->templates[ $self->matching_template_index ]->vars
+		);
+	}
+	else {
+		$context->default( $self );
+	}
 }
 
 1;
