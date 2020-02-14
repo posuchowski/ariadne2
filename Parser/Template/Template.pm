@@ -3,11 +3,15 @@ package Template v2.0.0;
 use Moose;
 use Method::Signatures;
 
+has 'name'     => ( isa => 'Str',     is => 'rw', required => 0 );
 has 'template' => ( isa => 'Str',     is => 'rw', required => 1 );
-has 'vars' 	   => ( isa => 'HashRef', is => 'rw' );
+has 'vars' 	   => ( isa => 'HashRef', is => 'rw', required => 0 );
 
 method BUILD ( $args ) {
-	$self->vars( {} ) unless defined( $self->vars );
+	$self->vars( {} )
+		unless defined( $self->vars );
+	$self->name( $self->template )
+		unless defined( $self->name );
 }
 
 method reset () {

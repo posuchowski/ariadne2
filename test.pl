@@ -3,6 +3,7 @@ use Test::More;
 use TAP::Harness;
 
 my @tests = (
+	[ 't/test_GCC.t',	   't::fixtures::GenericCommandContext' ],
  	[ 't/test_Template.t', 'Parser::Template::Template' ],
  	[ 't/test_Sentence.t', 'Parser::Template::Sentence' ],
  	[ 't/test_Warning.t',  'Ariadne::Game::Warning' ],
