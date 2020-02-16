@@ -1,9 +1,20 @@
 #!/usr/bin/env perl
 
+BEGIN {
+	push @INC, '.';
+}
+
+# package Valid;
+# our @Adjective = ( 'big', 'chrome', 'metal' );
+# 
+# package main;
+# 
+
 use strict;
 use warnings;
 use Test::More;
 use Parser::Template::Sentence;
+use Parser::Template::Valid;
 
 use_ok( 'Parser::Template::Template' );
 
@@ -68,6 +79,20 @@ foreach my $q ( @quantifiers ) {
 		pass( "\t...And extra space in raw Sentence doesn't cause a problem" );
 	}
 }
+
+# Yada-yada
+diag( "Testing bare yada-yada slurp" );
+$T = new_ok( 'Template', [ 'template' => 'say ...' ] );
+ok( $T->matches( Sentence->new( raw => 'say "To hell with it all"' ) ), "Seems to slurp say ... OK" );
+diag( "Template variable _YADA_ = " . $T->vars->{'_YADA_'} );
+ok( $T->vars->{'_YADA_'} eq 'To hell with it all', "OK, _YADA_ = " . $T->vars->{'_YADA_'} );
+
+# Yada-yada Valid words
+diag( 'Testing use of yada-yada with $Valid words' );
+$T = new_ok( 'Template', [ 'template' => 'take $Adjective:... $Noun' ] );
+my $S = Sentence->new( raw => 'take the big metal gun' );
+ok( $T->matches( $S ), "OK, take the big metal gun matches template: " . $T->template );
+
 
 # Complex test
 diag( "Running a complex test" );

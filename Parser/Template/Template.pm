@@ -1,7 +1,12 @@
-package Template v2.0.0;
+package Template v2.2.0;
+BEGIN {
+	push @INC, '/home/posuchowski/dev/perl/ariadne2';
+}
 
 use Moose;
 use Method::Signatures;
+use Parser::Template::Valid;
+use List::MoreUtils 'any';
 
 has 'name'     => ( isa => 'Str',     is => 'rw', required => 0 );
 has 'template' => ( isa => 'Str',     is => 'rw', required => 1 );
@@ -43,15 +48,32 @@ method matches ( Sentence $sentence ) {
                 }
             }
         }
+
         if( $self->_is_optional( $test ) ) {
             $test =~ s/[\[\]]//g;  # strip '[' and ']' from exterior
             $optional = 1;
         }
+
+		# Process a bare ... or $Varname:...
         if( $self->_is_yadayada( $test ) ) {
-            $self->vars->{$varname} = join( ' ', @tokens ) if $varname;
-            @tokens = ();
-            next;
+			# Only slurp the remaining Valid tokens in varname
+			if ( $varname ) {  
+				my @slurped = ();
+				no strict 'refs';
+				my $ref = "Valid::$varname";
+				while ( any { $_ eq $tokens[0] } @$ref ) {
+					push @slurped, shift @tokens;
+				}
+				$self->vars->{$varname} = join( ' ', @slurped );
+			}
+			# Otherwise, use ... to save but disregard all remaining tokens
+			else { 
+				$self->vars->{_YADA_} = join( ' ', @tokens );
+				@tokens = ();
+			}
+			next;
         }
+
         if( $self->_does_match( $tokens[0], $test ) ) {
             my $val = shift @tokens;
             if( $varname ) {
