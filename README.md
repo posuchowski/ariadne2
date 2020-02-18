@@ -1,16 +1,19 @@
 # ariadne2
 
+I'm just getting started with (another) rewrite. This code just (hopefully)
+passes unit tests. There is no playable game or anything like that, yet.
+
 # Ariadne2 : Interactive Fiction Framework
 
 My love for the text adventure goes back to Zork. However, I would rather write
 a game than play a game. The primary goal of this project is to provide for as
-natural and as rich user interaction as possible. It's easy to create a puzzle-
-based game, but I think IF should be able to create the same kind of narrative
-experience as reading a novel or watching a film.
+natural and as rich user interaction as possible... eventually. It's easy to
+create a puzzle-based game, but I think IF should be able to create the same
+kind of narrative experience as reading a novel or watching a film.
 
 Ariadne is named after the character in Inception, and is as old as the movie.
-It's gone through several iterations. It keeps getting better and better, and
-that's more important than it ever being finished. :)
+It's gone through several iterations. I am currently reworking the classes from
+the original version into this one, while adding unit tests as I go.
 
 Commits will generally allow running sample_game.pl, but this isn't guaranteed
 since sometimes I just like to save my work.
@@ -20,6 +23,7 @@ since sometimes I just like to save my work.
 Parser::Template
   *::Sentence
 	*::Template
+  *::Valid
 	*::Command
 	*::Parser
 ```
@@ -81,5 +85,20 @@ The word in the position where `$Direction` appears will be saved to the
 template's `vars` hash:
 ```
 my $direction = $T->vars->{'Direction'};
+```
+
+### Parser::Template::Valid
+
+No methods, just a set of lists of valid values for variables saved by the
+Template match code. For example:
+
+```
+our @Adjective = { 'red', 'white', 'blue', 'metallic' };
+```
+
+Which is then tested against during a yada-yada slurp in a template like this:
+
+```
+take $Adjective:... $Noun
 ```
 

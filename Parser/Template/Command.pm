@@ -8,18 +8,14 @@ use Moose;
 use Method::Signatures;
 use Game::Warning;
 
-use constant TRUE  => 1;
-use constant FALSE => 0;
+use constant True  => 1;
+use constant False => 0;
 
 has 'name' 		=> ( required => 1, isa => 'Str' );  # unambiguous command name
 has 'method'    => ( required => 1, isa => 'Str' );  # name of method to call
-has 'templates' => ( isa => 'ArrayRef[Template]', required => 1 );
-
-# What object is going to receive and execute the command
-# This is assigned by the engine... unless preassigned?
-has 'context'   => ( isa => 'GameObject',         required => 0 );
-
-has 'matching_template_index' => ( isa => 'Int',   required => 0 );
+has 'templates' => ( required => 1, isa => 'ArrayRef[Template]' );
+has 'context'   => ( required => 0, isa => 'GameObject' );
+has 'matching_template_index' => ( required => 0, isa => 'Int' );
 
 method BUILD() {
 	$self->matching_template_index = -1;
@@ -42,8 +38,10 @@ method matches( Sentence $sentence ) {
 				);
 			}
 			$self->matching_template_index( $i );
+			return True;
 		}
 	}
+	return False;
 }
 
 # 
