@@ -102,3 +102,7 @@ Which is then tested against during a yada-yada slurp in a template like this:
 take $Adjective:... $Noun
 ```
 
+In the original version, adjective-based disambiguation used to be handled by
+a sort of kludge game object called Intangible::Disambiguator, but that was
+stupid.
+
